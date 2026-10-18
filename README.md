@@ -15,3 +15,11 @@ Claude Code skills for the full QA cycle of a sprint story in Jira + Xray. Defau
 | `qa-automation-commit` | Playwright script hand-off: run 3 times → Jira ticket → branch → commit → PR, with a learning mode that explains every git step. |
 
 Needs: the Atlassian MCP (Jira), the Xray MCP, and Claude in Chrome for the Chrome skills.
+
+## How to install
+
+1. Clone this repo: `git clone https://github.com/omima-web/my-qa-skills.git`
+2. Copy the skill folders you want into `~/.claude/skills/` (Windows: `C:\Users\<you>\.claude\skills\`).
+3. Restart Claude Code, then run a skill by its name, e.g. `/qa-sprint-start`.
+
+To get updates later, run `git pull` inside the cloned folder and copy the changed skills again.
