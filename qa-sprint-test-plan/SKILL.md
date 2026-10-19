@@ -5,6 +5,8 @@ description: Runs the QA's sprint Xray Test Plan (Jira project CPD, modelled on 
 
 # Sprint Test Plan — autonomous
 
+> Shared by Omima Mohammed (QA, Partners squad, Salla). Defaults are set for Jira project `CPD`; change the Constants (project, board, fields, filters) for your squad before using it.
+
 Runs end-to-end without questions. Report in Egyptian Arabic. Never echo the Test Data credentials that sit in the plan description.
 
 ## Constants (salla-dev)
@@ -57,7 +59,7 @@ Description scope tables (inside the description, rewritten by `rewrite-desc`):
 6. Schedule with `create_scheduled_task` (one-time `fireAt`, `+03:00`; skip an id that already exists):
    - `test-plan-review-<x-y-z>` at sprint start + 3 days, 10:00 → "Invoke the Skill tool with skill `qa-sprint-test-plan` (do not Read the SKILL.md path): phase REVIEW for Test Plan <KEY> (sprint <x.y.z>, id <id>, start <startISO>). Run autonomously, report in Egyptian Arabic."
    - `test-plan-close-<x-y-z>` on the sprint end date, 12:00 → same, phase CLOSE (add end date and the two comment ids).
-   Tell their these run only while the Claude app is open (else on next launch), and CLOSE needs Chrome open with the extension connected.
+   Tell the user these run only while the Claude app is open (else on next launch), and CLOSE needs Chrome open with the extension connected.
    Routine permissions: if `~/.claude/skills` is a junction/symlink to a folder outside the work folder, any Read there asks for approval and an unattended run waits forever. Add a `Read(<that folder>/**)` rule to `permissions.allow` in `~/.claude/settings.json` (auto mode won't let Claude edit settings.json; the user adds it). If it's missing, warn in the START report.
    Cleanup: `list_scheduled_tasks`, then `delete_scheduled_task` for every `test-plan-review-*` / `test-plan-close-*` of an older sprint that has already run (never the new sprint's, never one that hasn't fired yet). One-time tasks only auto-disable after firing; this keeps their Routines list clean.
 
