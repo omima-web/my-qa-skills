@@ -40,6 +40,6 @@ Find it later: body contains `QA Sign Off List`. At start every Value cell is em
 <tr><td><p>Performance testing, if applicable, meets the defined benchmarks. Any end point not exceed <strong>450</strong></p></td></tr>
 </tbody></table>
 ```
-- `{COVERAGE_NOTE}` at close: `<p>All sprint stories are covered and OK.</p>` or, when not all OK, `<ul><li><p><span style="color: #ff5630">{n} stories not OK: KEY (NOTRUN), KEY (UNCOVERED)…</span></p></li></ul>`. Empty at start.
+- `{COVERAGE_NOTE}` at close: `<p>All sprint stories are covered and OK.</p>` or, when not all OK (Test Sets left out), `<ul><li><p><span style="color: #ff5630">All {n} stories that are not OK in the coverage (UNCOVERED, NOT RUN, NOK) are not finished on the development side, and all of them spilled over to Sprint {NEXT}. The gap is not on the QA side:</span></p></li><li><p><span style="color: #ff5630">KEY (UNCOVERED), KEY (NOT RUN), KEY (NOK).</span></p></li><li><p><span style="color: #ff5630">Test Sets are not counted in the coverage.</span></p></li></ul>` (reference: CPD-32982 Sign Off). Empty at start.
 - `{COVERAGE_IMAGE}` at close: the media-single figure (coverage.png, `data-width="80"` percentage). Empty at start.
 - Pending row: write `0` at close when nothing is pending (empty at start).
