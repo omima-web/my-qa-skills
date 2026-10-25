@@ -2,8 +2,9 @@
 name: qa-signoff-auto
 description: >
   Autonomous QA sign-off for a Salla CPD story. a personal autonomous variant of the team skill qa-signoff: same requirements, plus
-  gates and clean-up. Checks that the Test Execution has every linked test and all are PASSED, that defects are closed
-  (Dev Rejected excepted), and that Console/Security/API checks are clean. Records a video in Chrome and attaches it,
+  gates and clean-up. For an API-only story it first runs qa-api-suite on Dev (their Apidog suite) and blocks on any new failure. Checks that the Test Execution has every linked test and all are PASSED, that defects are closed
+  (Dev Rejected excepted), and that Console/Security/API checks are clean. Then runs the story's regression set
+  (tests labelled `regression`) in Chrome and records that run as the sign-off video, and attaches it,
   closes their QA sub-tasks and the execution, posts a short sign-off comment, then moves the story to PM Review
   assigned to the reporter. No confirm pause; it stops only if a gate fails. Use for "ساين أوف", "sign off",
   "حولها للبي ام", or a story key to sign off. Not the team's qa-signoff, which pauses to confirm.
@@ -40,6 +41,14 @@ Reply in the user's language. Transitions, fields, and comment templates: `refer
 - Defects: `parent = <story> AND issuetype = Defect`, plus defects linked to the story or to the execution.
 - Environment: from the execution's `Testing Environment`, otherwise from the story's Test Link / Development field. Ask only if both are empty.
 
+### 1b. API-only story → run its Apidog suite first
+If the story is **API-only** (label `API-only`, or a public / partner API with no screen, e.g. Partner API), sign-off always starts with `qa-api-suite` on **Dev** — the user said «ساين أوف» and both skills run together, the way `qa-sprint-start` chains its skills:
+1. Tell their in one line: «الستوري API بس، فقبل الساين أوف هنرن السويت على Dev».
+2. No suite yet in `D:\omima-qa\apidog\` → `qa-api-suite` builds it first.
+3. The user runs the scenario in Apidog (Testing Env) and exports the HTML report to `D:\omima-qa\apidog\reports\`; `qa-api-suite` reads it and writes the analysis.
+4. A **new** real failure (not a known open bug, not an empty variable, not a 429 from speed) is a blocking gate: stop, show it, and draft the defect (formal template). Known open bugs / Dev Rejected defects don't block. Clean → continue to step 2.
+Not API-only → skip this step.
+
 ### 2. Gates: if any one fails, stop, tell the user, and offer the REJECT sign-off
 1. **Coverage:** every linked test is in the execution and every run is **PASSED**. The execution is in the sprint Test Plan (add it if missing). List what's missing or not PASSED.
 2. **Defects:** all Closed. **Dev Rejected** ones don't block and aren't touched; they're listed in Notes. Any other open defect blocks.
@@ -52,11 +61,22 @@ Reply in the user's language. Transitions, fields, and comment templates: `refer
 
 4. **Affiliate impact:** if the story touches affiliate, read `your private affiliate context file (e.g. `context\affiliate-context.md`, if you keep one)` (sync it with Jira after its «آخر مزامنة مع جيرا» date first). Check that the impact areas from its Part 5 that this story touches were covered by a test in the execution or by a check in the run. Uncovered areas don't block on their own: list them to the user and add them to Notes as "مناطق إمباكت ما اتغطتش". Add any new business fact from the story (ACs, PM decisions in the comments) to the file + a «سجل التحديثات» row.
 
+### 2b. Regression — run the `regression` set before signing off
+The old rule stays: when all defects are Closed, every run in the story's executions is PASSED without re-running. The regression is a separate, scoped run on top of that:
+1. Take the story's tests with the label `regression` (chosen by `qa-create-testcase-auto` step 4b). **No label yet (older story)?** Pick them now by that standard (happy path per AC, money/numbers, permissions, impact on older areas, top edge case; ~¼–⅓), add the label, and don't ask the user. API-only story: the Apidog suite in step 1b is the regression; skip to step 3.
+2. Create-or-reuse a Test Execution **`regression for <story summary>`** with only those tests: sprint set, assignee = their, Testing Environment = the story's, added to the sprint Test Plan, moved to In Progress.
+3. Run them in Chrome on the story's environment (same how-tos as `qa-run-story-chrome` step 2). Each run → EXECUTING → PASSED / FAILED as soon as it ends.
+4. **This run is the sign-off evidence (step 3):** record it while running — start with the story's main point, then the other regression tests in order, action labels on. One GIF `<STORY>_signoff.gif`; split into `_1` / `_2` if it would pass 10 MB. No second recording just for the video.
+5. **All PASSED** → close the regression execution after step 4 and continue. **Any FAILED** → stop the sign-off: tell the user «التست <KEY> فشل — افتحي QA Bug Recorder وابدئي Capture»، repeat only the bug's steps under it, the user stops it, draft the defect in the recorder form's fields and wait for the user OK, then create it through `qa-recorder-defect` (Defect under the story, or Bug + next sprint if it has nothing to do with the story). A story Defect = the REJECT path below.
+6. In the comment checklist add: `✅ Regression: N/N PASSED — <execution key>`.
+
 **REJECT (only after the user says so):** use the team's red template from references, then transition **Reopen** (id 131, verify live) back to the developer. Put the blocking issues first, each with its AC, expected vs actual, severity, and video.
 
 ### 3. Evidence (Claude records it; never ask the user for a link)
-- Record **only what the story changed**, on the story's environment. **Start with the story's main point** (e.g. CPD-32972: the default range is the last week on first load, with the days highlighted in the calendar), then the other ACs in order (same picker and presets as the reference, custom range, presets). Record the video only; don't re-test anything while recording. Put a one-line caption above the video in the comment listing what it shows. Every step must clearly show its AC result (e.g. open the picker → choose a range → the cards change). Don't do side actions whose purpose isn't obvious in the video (e.g. opening another list's filter). Use `gif_creator` (action labels on, watermark off, quality 10), name it `<STORY>_signoff.gif`, and keep it under 10 MB. No screenshots needed.
+- **Normally the video is the regression run from step 2b** (already recorded); use the rules below for its order and captions. Record a separate video only for an API-only story's screens or when step 2b was skipped.
+- Record **only what the story changed**, on the story's environment. **Start with the story's main point** (e.g. CPD-32972: the default range is the last week on first load, with the days highlighted in the calendar), then the other ACs in order (same picker and presets as the reference, custom range, presets). In a separate video, don't re-test anything while recording. Put a one-line caption above the video in the comment listing what it shows. Every step must clearly show its AC result (e.g. open the picker → choose a range → the cards change). Don't do side actions whose purpose isn't obvious in the video (e.g. opening another list's filter). Use `gif_creator` (action labels on, watermark off, quality 10), name it `<STORY>_signoff.gif`, and keep it under 10 MB. No screenshots needed.
 - If a Loom or birdeatsbug video already exists on the story (Test Link field), reference it too.
+- **API-only story:** no screen to record, so the evidence is the Apidog suite report (HTML) + its analysis file, copied to `evidence/<STORY>/` as `<STORY>_apidog-suite-report_<env>_<date>.html` / `…-analysis_….md`, attached, and shown in the comment as a media group. TestDino Link and Demo Link = the endpoint URL on the tested environment.
 - **If the user says evidence later** (e.g. the branch passed on Dev and the user'll give the Live page after release, as on CPD-32987), skip this step. Write `🎥 Evidence: will be added after the release on Live` in the comment and continue. When the user later gives the Live page, record the video and edit the same comment to embed it.
 - Before uploading, read the story's `attachment` field and skip anything already there.
 - Upload in Chrome on `https://salla-dev.atlassian.net/browse/<STORY>`: label the media-picker `input[type=file]`, then `find` it and `file_upload`.
@@ -64,7 +84,7 @@ Reply in the user's language. Transitions, fields, and comment templates: `refer
 
 ### 4. Clean-up
 - Close their QA sub-tasks (`Writing Testcases |`, `Testing |`, assigned to the user). Discover transitions live and never touch dev or others' sub-tasks.
-- Close the Test Execution.
+- Close the Test Execution and the `regression for …` execution (both stay in the sprint Test Plan).
 
 ### 5. Comment (template in references)
 The comment has four parts:
@@ -73,7 +93,7 @@ The comment has four parts:
    - Dev / PR link → "Development" + the dev link.
    - Both → both lines. The rules are in references.
 2. **Only the video, embedded inline in the comment** (required). No screenshots in the comment, because they make it too long.
-3. **The QA checklist**: all 20 lines: the team's 17 items plus their 3 (test cases executed, API test, console), one item per line, never grouped. Each line is ✅ done, ❌ not needed — reason, or ⚠️ not done — why. Be honest: e.g. if Firefox wasn't run, write ⚠️; never mark ✅ what wasn't done.
+3. **The QA checklist**: all 21 lines: the team's 17 items plus their 4 (test cases executed, API test, console, regression), one item per line, never grouped. Each line is ✅ done, ❌ not needed — reason, or ⚠️ not done — why. Be honest: e.g. if Firefox wasn't run, write ⚠️; never mark ✅ what wasn't done.
 4. Notes, only when needed.
 
 Post it as HTML with `addOrEditJiraIssueComment`, embedding the uploaded attachments as media (see `getContentFormatGuide`):
@@ -87,7 +107,7 @@ If the video can't be embedded, stop and tell the user. No sign-off without the 
 Verified on CPD-32987 (2026-10-08):
 - If the story is **Ready for Testing**, first run **start test** (id 41) → In-Testing.
 - Then run **Move to PM Review** (id **361**, verify live with `expand: transitions.fields`). Its fields:
-  - `assignee` = the PM. **The PM is the story's reporter when that is a PM**. If the reporter is a dev, ask the user who the PM is.
+  - `assignee` = the PM. **The PM is the story's reporter when that is a PM**. If the reporter is a dev, ask the user who the PM is. The 361 screen may reject `assignee` ("not on the appropriate screen", CPD-33621): then set it with `editJiraIssue` first and run 361 without it.
   - `customfield_10786` Testing Environment (Development Server 11095 / Production 11096).
   - **Required by a validator:** `customfield_19497` **TestDino Link** (URL) and `customfield_19498` **Demo Link** (text). There's no TestDino/automation yet, so the user said to put the story's test link in both: the dev link from the Test Link field, or the Live URL after release.
   - CPD's transition screen has **no QA Sign-off Checklist field**; the checklist lives only in the comment.

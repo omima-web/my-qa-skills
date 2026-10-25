@@ -50,11 +50,12 @@ const desc = (pre, steps, exp) =>
   '\n\n*Expected results:*\n' + exp.map(x => '* ' + x).join('\n');
 
 async function createTest(story, s, tc) {
-  const [title, layer, beh, func, auto, pre, steps, exp, placeholder] = tc;
+  // 10th column: true = regression set (picked by the standard in SKILL.md step 4b)
+  const [title, layer, beh, func, auto, pre, steps, exp, placeholder, regression] = tc;
   const platforms = s.platforms || ['Dashboard'];
   const fields = {
     project: { key: plan.project }, summary: title, description: desc(pre, steps, exp),
-    labels: placeholder ? [...s.labels, 'unresolved-testcase'] : s.labels,
+    labels: [...s.labels, ...(placeholder ? ['unresolved-testcase'] : []), ...(regression && !placeholder ? ['regression'] : [])],
     customfield_10786: { id: ID.env },
     customfield_10828: { id: ID.beh[beh] },
     customfield_11951: [{ id: ID.type[layer] }],

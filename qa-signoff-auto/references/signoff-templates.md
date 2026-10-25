@@ -35,7 +35,7 @@ If a security or API test was **not needed**, leave its box unticked. The commen
 - ❌ not needed — <reason>
 - ⚠️ not done — <why> (only when it should have been done, e.g. Firefox not run; say it honestly, never mark ✅)
 
-**20 lines, always all of them, one item per line, never grouped:** the team's 17 items (exact names) followed by the QA's 3.
+**21 lines, always all of them, one item per line, never grouped:** the team's 17 items (exact names) followed by the QA's 4.
 
 Team QA Sign-off Checklist (17):
 1. Functional
@@ -60,10 +60,11 @@ Team QA Sign-off Checklist (17):
 16. Light/Dark
 17. Multi-market
 
-personal additions (3):
+personal additions (4):
 18. Test cases executed (Xray): <N>/<N> passed · Test Execution <KEY>
 19. API test: done + result, or not needed + reason
 20. Console: clean / errors found
+21. Regression: <N>/<N> passed · Execution <KEY> (API-only: the Apidog suite report)
 
 ## Environment line (always explicit)
 - Tested on Live → `Environment: Live (Production) — <live URL, e.g. https://s.salla.sa/...>`, Testing Environment = Production.
