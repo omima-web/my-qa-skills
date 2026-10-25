@@ -1,13 +1,15 @@
 ---
 name: qa-retest-defects
-description: Retest Salla CPD defects that developers moved back to Ready for Testing / Re-test. Given one or more story keys (or none = all of the QA's open-sprint stories plus defects the user reported), list the ready defects and go on without stopping, retest each one in their Chrome (Claude in Chrome) on the story's own environment with GIF + screenshot evidence, show the results and the drafted comments for the user OK, then Close the fixed ones, Reopen the rest (also partly fixed), comment inside each defect, and set the linked Xray tests to PASSED. Use when the user says "ريتست", "retest", "اعمل retest", "رنلي الديفكتات", "شيك على الباجات", or gives story keys to retest. First-time runs of a story's test cases and new defects belong to qa-run-story-chrome.
+description: Retest Salla CPD defects that developers moved back to Ready for Testing / Re-test. Given one or more story keys (or none = all of the QA's open-sprint stories plus defects the user reported), list the ready defects and go on without stopping, retest each one in their Chrome (Claude in Chrome) on the story's own environment with GIF + screenshot evidence, show the results and the drafted comments for the user OK, then Close the fixed ones, Reopen the rest (also partly fixed), comment inside each defect, and set the linked Xray tests to PASSED. Use when the user says "ريتست", "retest", "اعمل retest", "رنلي الديفكتات", "شيك على الديفكتات", or gives story keys to retest. Live Bugs outside the story ("شيك على الباجات") belong to qa-retest-bugs. First-time runs of a story's test cases and new defects belong to qa-run-story-chrome.
 ---
 
 # Retest defects
 
 Reply in the user's language.
 
-The user checks for ready defects themselves and runs this skill when the user wants. There is no scheduled detection task. Never create a notify or check routine for this.
+**Defects only:** this skill is for issue type `Defect` under a story. Issue type `Bug` (outside the task's scope, almost always on Live, including a defect the user had converted to a bug) is never retested here — that's `qa-retest-bugs` ("شيك على الباجات"). If Bugs are also ready, say so in one line at the end.
+
+A notify routine may tell the user what is ready; the user runs this skill when they want. Never create another notify or check routine for this.
 
 ## Constants (salla-dev)
 - Jira cloudId `55c7c758-a0af-4f65-a8cb-c162bb760aab`, project `CPD`. The user's accountId comes from `atlassianUserInfo`. QA Engineer field `cf[16280]`.

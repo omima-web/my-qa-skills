@@ -24,6 +24,11 @@ References (same folder): `references/ticket-reading.md`, `references/tc-templat
    - **Don't contradict the file:** Part 6.1 (not bugs) and the decisions in Part 6 win over a guess; a known open bug in Part 7.1 is linked, not re-written.
    - **Report:** add an «الإمباكت» line per story: the areas from Part 5 you covered and any you left out on purpose.
    - Any new fact the user tells you about affiliate → add it to the file the same run.
+1b. **Read the story's code before sizing.** Find the story's PRs: Jira dev-status (`/rest/dev-status/latest/issue/detail?issueId=<id>&applicationType=GitHub&dataType=pullrequest`) or `gh search prs "<KEY>" --owner SallaApp`; the code of a story is often inside another story's PR, so also search the epic's other keys. From the PR take:
+   - the **real** endpoint paths, params, body fields, validation limits (min/max, trimmed, required_without), error codes and statuses, and any design doc under `docs/changes/` (its decision table and error table are the best source for negative tests);
+   - the **changed files** → every other screen/flow that uses them is an impact area (step 4b).
+   Write the tests to the real behaviour in the PR. If the PR disagrees with the story, keep the AC, write what the code does in the test and put the difference in the PM comment. If there is no PR yet, write to the story and add `⚠ path/fields to confirm against the PR at run start` to the API tests' preconditions.
+1c. **Story type.** Decide and report one of: **UI** (screens only), **UI + backend** (screens that call our own backend), **API-only** (a public/partner API used with a token and no screen, e.g. Partner API). API-only stories get the label `API-only`; the run skill uses it to plan an Apidog suite (`qa-api-suite`) after the first run.
 2. **Skip what's already covered:** search Xray/Jira for existing Tests/Test Sets linked to the story (`issue in linkedIssues(<KEY>)`, `getCoverableIssues`). If the story already has a Test Set with tests, do not create duplicates — just make sure those tests are in the sprint Test Plan and report it. Its "Writing Testcases" sub-task still goes Todo → In Progress → Closed (step 0 + step 13) — only the sub-task moves, no new tests.
 3. **Resolve the axes without stopping:**
    - Impacted Surface: use the `Dashboard`/`Store` labels when present. **If empty, don't stop:** Partner Portal / affiliate portal / merchant dashboard screens → `Dashboard`; storefront / checkout → `Store`; both → Both. Note the assumption in the report and the PM comment.
@@ -42,6 +47,21 @@ References (same folder): `references/ticket-reading.md`, `references/tc-templat
    - **Corner cases:** two things at once (search + tab + page together, fast clicking, double submit), refresh / back button / direct URL, slow or failed network, session expired, a user with no permission, the feature flag off.
    - **Impact on other areas (الارتباطات):** list every other screen or flow that uses the same data, API, component or setting (navbar dropdowns, counters/badges, notifications, emails, admin side, store side, mobile app, other portal pages, old links/redirects). Write at least one `[Regression]` or `[Integration]` test for each one that could break, and say in the test which story change could affect it.
    Note in the report how many edge / corner / impact tests each story got.
+4c. **Self-review before creating anything.** Go through the full list once as a reviewer and fix it before step 9:
+   - Every AC has at least one Positive test; every cell of the rules matrix (4a) is covered; every error code/limit from the PR (1b) has a Negative or Boundary test.
+   - Edge cases, corner cases and impact (4b) were each considered; the ones left out are left out on purpose (say why in the report).
+   - No test is written on a proposal the PR changed; paths, params and fields match the code.
+   - No duplicates, no test that tests two unrelated things, no test that contradicts a team decision or a known not-a-bug in the context file.
+   - Every test is runnable as written: exact URL/endpoint, data, steps and an expected result that can be checked (status + field/message, or what is visible).
+   - **Language:** clear, formal and specific. English for titles/steps/expected results (Arabic UI text quoted exactly). No chat words ("I found", "we saw", "seems", "maybe"), no vague expectations ("works fine", "correct"). State the rule being tested.
+   Report: «الريفيو: عدّلت X، ضفت Y، شلت Z».
+4b. **Regression set — Claude picks it, the user does NOT review it.** Add the label `regression` to the tests that match this risk-based standard (about ¼–⅓ of the story's tests):
+   1. the main happy path of every AC (one test per AC);
+   2. anything with money / numbers: commission, amounts, discounts, coupons, totals;
+   3. permissions / security: who sees what, 401/403, tokens;
+   4. impact cases on older areas (impact table + area context file);
+   5. the story's most important edge case.
+   Never tagged: responsive / dark / localization (unless the story is about that UI), small single-field negatives, data-variant duplicates, performance, placeholders. `qa-signoff-auto` runs exactly this set before sign-off and `qa-live-test` runs it on Live. Report one info line «الريجريشن: N تستات» (not for review).
 5. **Undefined behaviour → placeholder test** (`unresolved-testcase` label, Non Automatable, expected = "⚠ PENDING PM DECISION — … do not execute until confirmed."). Every open question on the story gets one.
    - **Exception — Salla-plan affiliate commission (the QA's rule):** the affiliate code/commission applies only to the merchant's plan subscription; renewals and upgrades never earn commission. Never write a test (or a placeholder / PM question) that expects commission on a renewal or upgrade. At most one Negative test "renewal/upgrade creates no commission".
 6. **Expansion & Multimarket:** follow the PM gate in `expansion-multimarket.md`, but when unanswered create **one placeholder per dimension** (`[Expansion][SA/KW/UAE]`, `[Multimarket][SA/KW/UAE/BH]`), not one per country. Split per country only once the PM says yes.
@@ -51,7 +71,7 @@ References (same folder): `references/ticket-reading.md`, `references/tc-templat
    - Merchant-side affiliate pages → `/Dashboard/Merchants Area/Marketing Tools/Affiliate`
    - Message Center → `/Portal/Partners Area/Message Center`
    - Other partner pages → the matching folder under `/Portal/Partners Area/…`
-9. **Write the plan file** (in the scratchpad) and run `xray-create.js` with `max=1` first; verify the pilot with `getJiraIssue` (fields) and `getCoverableIssues` (link). Then run it for `all`. Then read back: Test Plan total, each Set total, each story's coverage count.
+9. **Write the plan file** (in the scratchpad; each test row = `[title, layer, behavior, func, auto, pre, steps, exp, placeholder, regression]`, `regression` = true for the step 4b set) and run `xray-create.js` with `max=1` first; verify the pilot with `getJiraIssue` (fields) and `getCoverableIssues` (link). Then run it for `all`. Then read back: Test Plan total, each Set total, each story's coverage count.
 10. **Xray access:** if the `xray-graphql` MCP is connected you may use it; otherwise use the scripts — never fall back to "manual steps" for Set/Plan/folder.
 11. **PM comment — post automatically**, one per story that has placeholders or AC conflicts, via `addOrEditJiraIssueComment` with `contentFormat: "html"` and a real mention: `<span data-type="mention" data-user-id="<accountId>">@Name</span>`. Take the PM accountId from the story reporter / existing comment mentions; never guess. List each placeholder test key + its question, and each AC conflict.
 12. **Follow-up:** create (or update) a scheduled task (`mcp__scheduled-tasks__create_scheduled_task`, Sun–Thu 10:00 and 16:00) whose self-contained prompt lists every placeholder key + question + story + Test Set + PM accountId, and applies PM answers: rewrite expected results, drop `unresolved-testcase`, set Test Category, mark Expansion/Multimarket N/A (`na-per-pm`, never delete) or split per country (create + link + add to Set/Plan). If a task `pm-replies-update-xray-tests` already exists, update its prompt to include the new stories instead of creating a second one.
@@ -59,4 +79,4 @@ References (same folder): `references/ticket-reading.md`, `references/tc-templat
 14. **Never delete** issues, links, set/plan memberships or folders. When the user corrects a requirement (e.g. "one code for monthly and yearly"), edit the affected tests in place with `editJiraIssue`.
 
 ## Report (Egyptian Arabic, short)
-Per story: tests created (count), Test Set key (created/reused), Writing Testcases sub-task key + final status, placeholders waiting for the PM. Then Test Plan key + total, the assumptions you made (surface, platform, folders), AC conflicts, and anything that failed. End with the remaining work (PM answers, test execution).
+Per story: story type (UI / UI + backend / API-only), PRs read (or "no PR yet"), tests created (count), «الريجريشن: N تستات», Test Set key (created/reused), Writing Testcases sub-task key + final status, placeholders waiting for the PM. Then Test Plan key + total, the assumptions you made (surface, platform, folders), AC conflicts, and anything that failed. End with the remaining work (PM answers, test execution).
