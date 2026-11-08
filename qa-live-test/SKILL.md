@@ -22,7 +22,7 @@ Story key(s). The Live URLs come from the story (Test Link / description) and th
 ### 1. Read and check it's ready
 - `getJiraIssue <story>` (view `full`): status, ACs, sprint, sub-tasks, Test Link, Development (deployments).
 - It must be deployed to Production and waiting for the decision (status Preparing to Deploy / Deployed with the Approve / Decline choice on the story). Not deployed yet → tell the user and stop.
-- **Find the decision control once and write it here + in the run context** (2026-10-25: not yet seen): on the story page in their Chrome, look for the deployment approval (Approve / Decline, Reject or Discard) in the Releases / Deployments panel or the status menu. Never click it before step 6.
+- **Decision control (found 2026-10-27, CPD-32566):** on the story page in Jira, right panel under the status button: «This request requires your approval» → **Approve** / **Decline** (Approvals panel, approver = their, Jira field `customfield_10039`). Not a status transition (Deployed only offers Pending / In-Testing / Backlog) and the Atlassian MCP has no approval operation, so click it in their Chrome. Approve moves the story straight to **Closed**. Never click it before step 6.
 
 ### 2. Sub-task + execution
 - Create-or-reuse the sub-task **`Live Test | <story summary>`** under the story, assigned to the user, In Progress (same pattern as `Testing | …`; transitions read live).
@@ -35,7 +35,9 @@ Story key(s). The Live URLs come from the story (Test Link / description) and th
 - API-only story: run its Apidog suite on the Live environment (`qa-api-suite`, switch the Apidog Environment) instead of Chrome.
 
 ### 4. Recheck the story's closed defects on Live
-- `parent = <story> AND issuetype = Defect AND status = Closed` (plus defects linked to the story's executions). Dev Rejected ones are skipped.
+- `parent = <story> AND issuetype = Defect AND status = Closed` (plus defects linked to the story's executions).
+- Dev Rejected ones: read their comments. Rejected because "it only works / shows on Live" (e.g. data from partners report) → recheck it on Live like a closed defect (CPD-33460 usage counter was missed on 2026-10-28). Other Dev Rejected ones are skipped.
+- An empty report / response for something that should show data is never a PASS.
 - Repeat each defect's steps on Live with a GIF + screenshot. Fixed → note it. Back again → it's a failure tied to the story (step 5).
 
 ### 5. A failure
@@ -45,7 +47,7 @@ Story key(s). The Live URLs come from the story (Test Link / description) and th
 
 ### 6. Decision on the story
 - **Any story Defect** → **no Approve.** Choose the other option (Decline / Reject / Discard), then move / assign the story back to that Defect's developer (BE or FE; several → the FE dev unless all are BE). Comment on the story: `@<dev>` + the defect keys + one line each. Keep the sub-task and the execution In Progress.
-- **Only unrelated Bugs, or nothing failed** → close the execution, close the `Live Test |` sub-task with the comment `تم الاختبار على Live — <N>/<N> PASSED` (+ the Bug keys if any), attach the evidence, then **Approve** the deployment (do it only if the user said to in this run; otherwise tell the user «جاهزة للـ Approve» and stop).
+- **Only unrelated Bugs, or nothing failed** → close the execution, close the `Live Test |` sub-task with the comment `تم الاختبار على Live — <N>/<N> PASSED` (+ the Bug keys if any), attach the evidence, then **Approve** the deployment (do it only if the user said to in this run; otherwise tell the user «جاهزة للـ Approve» and stop). After Approve, **assign the story to the team leader**, not its dev — the story is Closed but must not stay on QA.
 - Read back: story status + assignee, sub-task, execution, created defects / bugs.
 
 ### 7. Report
