@@ -58,6 +58,13 @@ Read the story, its PRs and the tests' `API-only` label, then open the run with 
   - Use the emails/notifications map (Part 4) to check what each action should send (to `<your-email>+<n>@salla.sa`), and mark the row "اتأكدنا" with the date after a real run.
   - New facts found in the run → add them to the file + a «سجل التحديثات» row.
 
+### 1b. Compare the written cases with the CODE before running
+Claude can read the code; the QA sees only the UI. Cases written from the AC are generic on purpose: at run time, before any test, make them concrete against what was really built:
+1. Read the PR diff (`gh pr diff <n> -R <repo>`) and the changed component's code: conditions, defaults, states, which routes use it, shared code. Write down what it does, and where it differs from the AC / Figma / PM comments (copy, rules).
+2. **Edge cases ("الاتش كيسز") come from the code:** every branch and condition (`status !== x`, empty / null / unknown values, loading state, unsaved state, switching back and forth, missing translation keys, both routes / modal and page, feature flag off). Run the impact areas too (step 1 impact table).
+3. Compare with the existing Xray cases: covered → fine; missing → create the new Test (linked to the story, Test Set, Test Plan, this execution); a written case that doesn't fit what was built (field or notice that doesn't exist on the page, rule the code can't reach) → rewrite it or remove it (unlink), don't leave it.
+4. Show their the result in one short table (case · from where in the code · new / rewritten / removed), then run. Add new facts to the area context file.
+
 ### 2. Execute in Chrome
 - **Recorder only when a bug shows up.** Run the tests without the recorder. When a test FAILS: finish Claude's own evidence (screenshot, GIF, logs), then stop and tell the user: «التست <KEY> فشل — افتحي QA Bug Recorder وابدئي Capture على التاب ده، وقوليلي.» After the user's OK, redo **only the bug's steps** on that tab (this is also the reproduction check), then: «اعملي Stop & review.» Take the new report id (`fetch('/api/reports?limit=5')` on the dashboard tab) and write it next to the failure (test key → report id). Claude can't press Start Capture / Stop (extension popup) and the dashboard has no "new report" button, so this is the only way a defect gets its recording. Passing tests never touch the recorder.
 - Load Claude in Chrome tools in one ToolSearch call; `tabs_context_mcp`, open a new tab.
@@ -78,10 +85,13 @@ Read the story, its PRs and the tests' `API-only` label, then open the run with 
   - Texts: compare word for word with the design (missing words, bold/Medium parts) and check that English has no Arabic left in it and is LTR.
   - Put one screenshot per mode in `evidence/<STORY>/`, and write the mismatches (design value vs portal value) in the run comment and the defect draft.
 - **Compare with the UI baseline:** every confirm dialog, toast, error banner, empty state, table and breadcrumb in the story is compared with the same element in the reference module listed in `D:\omima-qa\context\ui-baseline.md` (portal = Services for now; merchant dashboard: ask the user). Compare icon, colors, button order and names, wording, toast color/position, table pagination (cursor, not page numbers) and order (newest first, a new item appears at the top), in AR + EN × light + dark. Different from the reference = defect, even if it looks fine.
-- **API evidence for Claude's own API checks:** log every in-page request (tokens and JWT masked) and, per test, render the log as a readable table overlay, screenshot it, save it as `evidence/<STORY>/<TEST>_claude_api-log.jpg` and attach it to the Xray run (`addEvidenceToTestRun`). Their Apidog screenshots go next to it as `<TEST>_omima_apidog_<what>.png`, with any token value masked before upload.
+- **API evidence for Claude's own API checks:** log every in-page request (tokens and JWT masked) and, per test, render the log as a readable table overlay, screenshot it, save it as `evidence/<STORY>/<TEST>_claude_api-log.jpg` and attach it to the Xray run (`addEvidenceToTestRun`). Their Apidog screenshots go next to it as `<TEST>_user_apidog_<what>.png`, with any token value masked before upload.
 - **Mark every defect screenshot before attaching:** draw a red box and a short Arabic label on each problem (e.g. "زرار رمادي" next to "المفروض زي ده", "مفيش عداد هنا"). Use `your own `annotate-evidence` script (optional) -Spec <json>`, check the `_marked.png` with Read, then upload the marked files. The Jira tab must be the visible front tab during upload, or the files are silently dropped.
   - `[Security]` / `[Integration]` API tests: use `read_network_requests` and `javascript_tool` (`fetch` without credentials → 401; check the URL/body for tokens/PII; check `localStorage`). Never send their real token to another site.
   - `[Performance]`: reload the page, wait until it settles, then read with `javascript_tool`: `performance.getEntriesByType('navigation')[0]` (loadEventEnd, domContentLoadedEventEnd), LCP via `new PerformanceObserver(...).observe({type:'largest-contentful-paint', buffered:true})`, CLS via `layout-shift` entries, and the story's API calls from `performance.getEntriesByType('resource')` (duration, transferSize). Do the action (tab / search / page) and count the calls fired. Compare with the limits in the test (LCP < 2.5 s, load < 3 s, CLS < 0.1, API < 1 s, no duplicate calls, search debounced) and write the numbers in the run comment.
+- **Click everything on the page, in scope or not.** Before any PASS, list every interactive element on each page of the story (`document.querySelectorAll('a, button, s-button, [role=button], [role=tab], input, select')`) and click each one: every link, CTA, button, icon (copy, share, stats, ⋯ menus), tab, toggle and filter. Each must work: open the right page, load its data (no «فشل تحميل…», no 4xx/5xx), copy the right value. Write what each click did in the run comment. Nothing on the page stays unclicked. A failure in the story's scope is a Defect; one outside it is a Bug (Todo + next sprint).
+- **Every page state, with a fresh account too.** Repeat the click-through before and after the story's main action (create link, join, subscribe…), and with a brand-new account that has zero data as well as one with data. A new/empty record must show an empty or zero state, never an error. (CPD-33433: the new link's stats page returned 404; only the QA caught it.)
+- **Firefox for browser features.** Share, copy, clipboard, download and other native-API features are also tried on Firefox (the user has it). A browser-specific failure gets the browser name in the defect title, e.g. `[Partners][صفحة باقات سلة][Firefox] …`.
 - **Edge / corner / impact tests are the most important ones for the QA.** Never skip them or mark them BLOCKED just because they take longer. Use real tricky input, do the corner actions for real (refresh, back, fast clicks, two filters together), and open each linked area named in the test to check it still works. If something extra looks risky while running, test it too and add it to the report.
 - Result per test: PASSED / FAILED / BLOCKED (blocked = missing data, env down, needs an account switch the user hasn't done).
 - **Run-level checks, done once per story run (qa-signoff-auto reads them later):**
@@ -91,6 +101,16 @@ Read the story, its PRs and the tests' `API-only` label, then open the run with 
   - Write the three verdicts in the Test Execution **description**, in this format:
     `Console: clean | Security test: done – OK / not needed – <reason> | API test: done – OK / not needed – <reason>`
 - Never pay real money / transfer on Live; ask before anything that messages real people.
+
+### 2b. Gap review before the last PASS
+A run Claude passes must not leave bugs for the QA to find. Before closing the run, ask the gap-review questions from `qa-create-testcase-auto` step 4c (where each value comes from, what must not change, who uses it and when, what can be touched, where it runs, does it match the design). Run the checks they raise on the real page; for an answer with no test, add an Xray test (linked to the story, Test Set, Test Plan and this execution) and run it now. When the QA finds a bug after the run, add the way of thinking that would have caught it to step 4c — not the bug itself.
+Also before the final verdict: every test taken out of scope is removed from the execution, **the Test Set (it feeds the story's coverage panel — forgetting it left TO DO / NOTRUN on CPD-33687, never allowed again)**, the Test Plan, and unlinked from the story; read `getTestSet` after removing to confirm; check `getTests(jql:"issue in linkedIssues(<story>, \"is tested by\")")` with `status(isFinal:true)` shows no TO DO. Only tests with an open Defect stay FAILED.
+
+### 2c. What is recorded = what was done
+- Before the run, review the written cases against the story's real scope (the AC wording, what the feature does). Do it 2–3 times; scope often shifts at run time, so drop or rewrite the cases that no longer fit.
+- Record a result only for a case that was really run (by Claude or by their). Never mark PASSED a case nobody ran, not even with a comment saying so, and don't re-add removed cases because the user said «اعمل كل الحالات». Cases not run, out of scope, or impossible by the story's own rules (e.g. the same email can't register twice) are removed from the execution, Test Set and Test Plan and unlinked from the story (REST: `DELETE /rest/api/3/issueLink/<id>` from a Jira tab in the Claude group; 404 = already gone).
+- One Test Execution per story, always: reuse it for every run and retest, never create a second one (search `issuetype = "Test Execution" AND text ~ "<story key>"` and by the story's name first). Comments quoting its counts are updated whenever the counts change.
+- If an execution holds more than what was done, ask which cases are really needed, don't fill it up.
 
 ### 3. Record in Xray (live, while running — the QA 2026-10-12)
 - **Before the first test**, create-or-reuse Test Execution `execution for <story summary>`, sprint set, assignee = the QA, added to the sprint Test Plan; add the tests; move it to **In Progress** (transition 2; needs an assignee — new executions are born Closed).
@@ -153,6 +173,15 @@ Table: test key | result | defect (key, BE/FE, assignee). Then counts passed/fai
   - Bugs were raised: `تم الانتهاء من الاختبار، وفي انتظار حل الملاحظات` and list the Defect keys.
   - No bugs: `تم الانتهاء من الاختبار`.
 - If there were **no bugs**, continue straight into the sign-off (`qa-signoff-auto` for the story) without asking again. If there were bugs, stop here; sign-off waits for the fixes (`qa-retest-defects`).
+
+### 8b. Live run (the story's "live Test" sub-task) with open defects
+When the run is the Live test (Production, QA sub-task named «live Test» / «Live Test | …») and it ends with open defects:
+1. Comment on the sub-task: `تم الانتهاء من الاختبار، وفي انتظار حل الملاحظات` + the execution key and counts + the Defect keys (suggestions marked «اقتراح»).
+2. Move the sub-task to **Pending** (transition 81) until the developer fixes the defects. Don't close it.
+3. Story: if it is already `Preparing to Deploy` (a Decline already sent it back), leave the status and comment on the story instead, mentioning the developer: defects list + execution key. Otherwise Decline the Deployed approval as in `qa-live-test`. The story's own transitions from there are only Pending / Backlog / Deploy, so never invent a move back.
+4. A new defect found in the run that is only a suggestion (e.g. no image when the partner has none) is written as a Defect with Severity Minor and «[اقتراح]» in the title; its test stays PASSED.
+5. Duplicate defects: link the newer one «Duplicate» to the older; Todo has no Close transition, so tell the user to close it or ask the dev (Dev Rejected).
+6. The jira-markdown `[~accountid:…]` mention shows as plain text. Write the comment with `contentFormat: html` and `<span data-type="mention" data-user-id="<accountId>">@Name</span>` (accepted 2026-11-03), or ADF via REST.
 
 ## Retest
 Retesting defects that the developer moved back to Ready for Testing / Re-test is handled by the separate skill `qa-retest-defects` ("ريتست" / "رنلي الديفكتات"). Don't do it here.

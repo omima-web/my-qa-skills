@@ -1,11 +1,9 @@
 ---
 name: qa-create-qa-subtasks
-description: For the story keys the user gives (sets the story "QA Engineer" field to the user when empty), or else every active-sprint story whose QA Engineer is the user, make sure the two QA sub-tasks exist — "Writing Testcases | [story]" and "Testing | [story]". Existing ones are left as they are; missing ones are created in Todo and assigned to the user. Stories with another or empty QA Engineer are skipped. Never duplicates, never deletes. Run it at sprint start, before qa-create-testcase-auto (which moves "Writing Testcases" to In Progress, then Closed). Use when the user asks to create/add QA sub-tasks, test sub-tasks, or "write test cases + execution" sub-tasks for the sprint stories.
+description: For the story keys the user gives (sets the story "QA Engineer" field to the user when empty), or else every active-sprint story whose QA Engineer is the user, make sure the two QA sub-tasks exist — "Writing Testcases | [story]" and "Testing | [story]". Existing ones are left as they are; missing ones are created in Todo and assigned to the user. the QA is the QA for every sprint story (2026-11-04): other/empty QA Engineer is set to the user, Non Testable included. Never duplicates, never deletes. Run it at sprint start, before qa-create-testcase-auto (which moves "Writing Testcases" to In Progress, then Closed). Use when the user asks to create/add QA sub-tasks, test sub-tasks, or "write test cases + execution" sub-tasks for the sprint stories.
 ---
 
 # Create QA sub-tasks — autonomous
-
-> Shared by Omima Mohammed (QA, Partners squad, Salla). Defaults are set for Jira project `CPD`; change the Constants (project, board, fields, filters) for your squad before using it.
 
 Runs end-to-end without questions. Report at the end in Egyptian Arabic.
 
@@ -33,7 +31,7 @@ Runs end-to-end without questions. Report at the end in Egyptian Arabic.
 4. **Read back** with the step-2 query and confirm each of the user's stories has both sub-tasks.
 
 ## Rules
-- Never create sub-tasks on a story whose QA Engineer is someone else or empty.
+- (Changed 2026-11-04) the QA is QA on all sprint stories: create the sub-tasks on every story, set QA Engineer to the user, never skip by QA Engineer or Non Testable type.
 - Never delete or rename issues. Never touch dev sub-tasks (BE/FE/Review/Multi-Market…).
 - Idempotent: re-running only fills gaps.
 - If creation fails for one story, continue with the rest and report the failure.

@@ -41,6 +41,9 @@ Reply in the user's language. Transitions, fields, and comment templates: `refer
 - Defects: `parent = <story> AND issuetype = Defect`, plus defects linked to the story or to the execution.
 - Environment: from the execution's `Testing Environment`, otherwise from the story's Test Link / Development field. Ask only if both are empty.
 
+### 1a. Coverage must be clean BEFORE anything else — never allowed to repeat
+A test that is not run, out of scope, or waiting on others is removed from **all four places**: the execution, the **Test Set** (it feeds the story's coverage panel), the sprint **Test Plan**, and the story link (REST `DELETE /rest/api/3/issueLink/<id>`). Unlinking alone is NOT enough: the Test Set kept 3 tests as TO DO and the panel showed NOTRUN. Before the gates, read and confirm: `getTestSet(<story's Test Set>)` and `getTests(jql:"issue in linkedIssues(<story>, \"is tested by\")")` with `status(isFinal:true)` → every test PASSED (a FAILED only with an open Defect), no TO DO / BLOCKED / NOTRUN, and every execution's runs the same. Fix it yourself first, then continue.
+
 ### 1b. API-only story → run its Apidog suite first
 If the story is **API-only** (label `API-only`, or a public / partner API with no screen, e.g. Partner API), sign-off always starts with `qa-api-suite` on **Dev** — the user said «ساين أوف» and both skills run together, the way `qa-sprint-start` chains its skills:
 1. Tell their in one line: «الستوري API بس، فقبل الساين أوف هنرن السويت على Dev».
@@ -93,7 +96,7 @@ The comment has four parts:
    - Dev / PR link → "Development" + the dev link.
    - Both → both lines. The rules are in references.
 2. **Only the video, embedded inline in the comment** (required). No screenshots in the comment, because they make it too long.
-3. **The QA checklist**: all 21 lines: the team's 17 items plus their 4 (test cases executed, API test, console, regression), one item per line, never grouped. Each line is ✅ done, ❌ not needed — reason, or ⚠️ not done — why. Be honest: e.g. if Firefox wasn't run, write ⚠️; never mark ✅ what wasn't done.
+3. **The QA checklist**: all 20 lines: the team's 16 items (no Multi-market line) plus their 4 (test cases executed, API test, console, regression), one item per line, never grouped. Each line is ✅ done, ❌ not needed — reason, or ⚠️ not done — why. Be honest: e.g. if Firefox wasn't run, write ⚠️; never mark ✅ what wasn't done.
 4. Notes, only when needed.
 
 Post it as HTML with `addOrEditJiraIssueComment`, embedding the uploaded attachments as media (see `getContentFormatGuide`):

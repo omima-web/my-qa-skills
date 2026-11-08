@@ -23,21 +23,20 @@ Taken from the team skill `qa-signoff` (`references/signoff-templates.md`, prove
 | Dark mode checked | Light/Dark |
 | Mobile view checked | Responsive |
 | UI matches design / reference | Design |
-| Markets checked | Multi-market |
 | Console clean + no failed calls | Log/Network |
 | Security test done – OK | Security |
 | API test done – OK | Integration |
 
 If a security or API test was **not needed**, leave its box unticked. The comment's checklist says "not needed" with the reason.
 
-## Comment checklist (the team's 17 items + personal additions), every line one of:
+## Comment checklist (the team's 16 items + personal additions), every line one of:
 - ✅ done (+ short result if useful)
 - ❌ not needed — <reason>
 - ⚠️ not done — <why> (only when it should have been done, e.g. Firefox not run; say it honestly, never mark ✅)
 
-**21 lines, always all of them, one item per line, never grouped:** the team's 17 items (exact names) followed by the QA's 4.
+**20 lines, always all of them, one item per line, never grouped:** the team's 16 items (exact names) followed by the QA's 4.
 
-Team QA Sign-off Checklist (17):
+Team QA Sign-off Checklist (16; **Multi-market is dropped** — agreed 2026-10-27, never write that line):
 1. Functional
 2. Merchant App
 3. Edge Case
@@ -58,13 +57,12 @@ Team QA Sign-off Checklist (17):
 14. Log/Network
 15. Rovo AI
 16. Light/Dark
-17. Multi-market
 
 personal additions (4):
-18. Test cases executed (Xray): <N>/<N> passed · Test Execution <KEY>
-19. API test: done + result, or not needed + reason
-20. Console: clean / errors found
-21. Regression: <N>/<N> passed · Execution <KEY> (API-only: the Apidog suite report)
+17. Test cases executed (Xray): <N>/<N> passed · Test Execution <KEY>
+18. API test: done + result, or not needed + reason
+19. Console: clean / errors found
+20. Regression: <N>/<N> passed · Execution <KEY> (API-only: the Apidog suite report)
 
 ## Environment line (always explicit)
 - Tested on Live → `Environment: Live (Production) — <live URL, e.g. https://s.salla.sa/...>`, Testing Environment = Production.
